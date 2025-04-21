@@ -1,0 +1,110 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Upload Data File - Dashboard{% endblock %}
+
+{% block page_title %}Upload Data File{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-10">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3" style="background-color: var(--primary); color: white;">
+                <h6 class="m-0 font-weight-bold">Upload Excel or CSV File</h6>
+            </div>
+            <div class="card-body">
+                <div class="p-2">
+                    <div class="text-center mb-4">
+                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background-color: rgba(244, 122, 99, 0.1);">
+                            <i class="fas fa-file-excel fa-3x" style="color: var(--primary);"></i>
+                        </div>
+                        <p>Upload an Excel file (.xlsx, .xls) or CSV file to preview and analyze the data.</p>
+                    </div>
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Standard Bootstrap form instead of crispy form -->
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.title.id_for_label }}" class="form-label">Title</label>
+                                <input type="text" name="{{ form.title.name }}" class="form-control{% if form.title.errors %} is-invalid{% endif %}" id="{{ form.title.id_for_label }}" value="{{ form.title.value|default:'' }}">
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback">{{ form.title.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.file.id_for_label }}" class="form-label">File</label>
+                                <input type="file" name="{{ form.file.name }}" class="form-control{% if form.file.errors %} is-invalid{% endif %}" id="{{ form.file.id_for_label }}">
+                                {% if form.file.errors %}
+                                    <div class="invalid-feedback">{{ form.file.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                            <textarea name="{{ form.description.name }}" class="form-control{% if form.description.errors %} is-invalid{% endif %}" id="{{ form.description.id_for_label }}" rows="4">{{ form.description.value|default:'' }}</textarea>
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback">{{ form.description.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary px-4">Upload</button>
+                        </div>
+                    </form>
+                    
+                    <hr>
+                    <div class="text-center">
+                        <p class="small text-muted">Supported file types: .xlsx, .xls, .csv</p>
+                        <p class="small text-muted">Maximum file size: 10MB</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header py-3" style="background-color: var(--gray-bg);">
+                <h6 class="m-0 font-weight-bold" style="color: var(--primary);">How It Works</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: rgba(244, 122, 99, 0.1);">
+                                <i class="fas fa-upload fa-2x" style="color: var(--primary);"></i>
+                            </div>
+                            <h5 class="fw-bold">1. Upload</h5>
+                            <p class="text-muted small">Upload your Excel or CSV file</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: rgba(23, 162, 184, 0.1);">
+                                <i class="fas fa-eye fa-2x text-info"></i>
+                            </div>
+                            <h5 class="fw-bold">2. Preview</h5>
+                            <p class="text-muted small">Preview and validate your data</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; background-color: rgba(40, 167, 69, 0.1);">
+                                <i class="fas fa-table fa-2x text-success"></i>
+                            </div>
+                            <h5 class="fw-bold">3. Analyze</h5>
+                            <p class="text-muted small">Work with your data in the system</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
