@@ -1,0 +1,626 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Data Analytics - Dashboard{% endblock %}
+
+{% block page_title %}Data Analytics{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center" style="background-color: var(--primary); color: white;">
+                <h6 class="m-0 font-weight-bold">Data Analytics Tools</h6>
+            </div>
+            <div class="card-body">
+                {% if uploads %}
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="dataset-select" class="form-label">Select Dataset</label>
+                            <select class="form-select" id="dataset-select">
+                                <option value="">-- Select a dataset --</option>
+                                {% for upload in uploads %}
+                                <option value="{{ upload.id }}">{{ upload.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="analysis-type" class="form-label">Analysis Type</label>
+                            <select class="form-select" id="analysis-type">
+                                <option value="summary">Summary Statistics</option>
+                                <option value="correlation">Correlation Analysis</option>
+                                <option value="regression">Regression Analysis</option>
+                                <option value="clustering">Clustering</option>
+                                <option value="timeseries">Time Series Analysis</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="analysis-action" class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="button" class="btn btn-primary form-control" id="run-analysis">
+                                    <i class="fas fa-chart-line me-2"></i> Run Analysis
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-info" id="analysis-instructions">
+                            <i class="fas fa-info-circle me-2"></i> 
+                            Select a dataset and analysis type, then click "Run Analysis" to analyze your data.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Analysis Results -->
+                <div id="analysis-results" style="display: none;">
+                    <div class="card mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold" style="color: var(--primary);">Analysis Results</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="summary-stats-container">
+                                <h5 class="analysis-title">Summary Statistics</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="summary-stats-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Metric</th>
+                                                <th>Value</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>Count</td><td>1000</td></tr>
+                                            <tr><td>Mean</td><td>45.3</td></tr>
+                                            <tr><td>Standard Deviation</td><td>12.8</td></tr>
+                                            <tr><td>Minimum</td><td>10.5</td></tr>
+                                            <tr><td>25%</td><td>35.2</td></tr>
+                                            <tr><td>50%</td><td>47.6</td></tr>
+                                            <tr><td>75%</td><td>57.1</td></tr>
+                                            <tr><td>Maximum</td><td>89.4</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <div id="correlation-container" style="display: none;">
+                                <h5 class="analysis-title">Correlation Matrix</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover" id="correlation-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Features</th>
+                                                <th>Feature 1</th>
+                                                <th>Feature 2</th>
+                                                <th>Feature 3</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td>Feature 1</td><td>1.00</td><td>0.75</td><td>-0.32</td></tr>
+                                            <tr><td>Feature 2</td><td>0.75</td><td>1.00</td><td>-0.18</td></tr>
+                                            <tr><td>Feature 3</td><td>-0.32</td><td>-0.18</td><td>1.00</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <canvas id="correlation-heatmap" style="max-height: 400px;"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div id="regression-container" style="display: none;">
+                                <h5 class="analysis-title">Regression Analysis</h5>
+                                <div class="mb-4">
+                                    <h6>Model Summary</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-sm">
+                                            <tr><th>R-squared</th><td>0.845</td></tr>
+                                            <tr><th>Adjusted R-squared</th><td>0.843</td></tr>
+                                            <tr><th>F-statistic</th><td>215.2</td></tr>
+                                            <tr><th>Prob (F-statistic)</th><td>0.000</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h6>Coefficients</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Feature</th>
+                                                    <th>Coefficient</th>
+                                                    <th>Std. Error</th>
+                                                    <th>t-value</th>
+                                                    <th>p-value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr><td>Intercept</td><td>2.356</td><td>0.452</td><td>5.213</td><td>0.000</td></tr>
+                                                <tr><td>Feature 1</td><td>0.723</td><td>0.081</td><td>8.926</td><td>0.000</td></tr>
+                                                <tr><td>Feature 2</td><td>-0.312</td><td>0.094</td><td>-3.319</td><td>0.001</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <canvas id="regression-plot" style="max-height: 400px;"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div id="clustering-container" style="display: none;">
+                                <h5 class="analysis-title">Clustering Analysis</h5>
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <canvas id="cluster-plot" style="max-height: 400px;"></canvas>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <h6>Cluster Statistics</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Cluster</th>
+                                                        <th>Count</th>
+                                                        <th>Percentage</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr><td>Cluster 1</td><td>245</td><td>24.5%</td></tr>
+                                                    <tr><td>Cluster 2</td><td>378</td><td>37.8%</td></tr>
+                                                    <tr><td>Cluster 3</td><td>377</td><td>37.7%</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="timeseries-container" style="display: none;">
+                                <h5 class="analysis-title">Time Series Analysis</h5>
+                                <div class="mb-4">
+                                    <canvas id="timeseries-plot" style="max-height: 300px;"></canvas>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Decomposition</h6>
+                                        <div class="mb-3">
+                                            <canvas id="trend-plot" style="max-height: 150px;"></canvas>
+                                            <div class="text-center"><small>Trend Component</small></div>
+                                        </div>
+                                        <div>
+                                            <canvas id="seasonal-plot" style="max-height: 150px;"></canvas>
+                                            <div class="text-center"><small>Seasonal Component</small></div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Forecast</h6>
+                                        <div class="mb-4">
+                                            <canvas id="forecast-plot" style="max-height: 300px;"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background-color: rgba(244, 122, 99, 0.1);">
+                        <i class="fas fa-chart-bar fa-3x" style="color: var(--primary);"></i>
+                    </div>
+                    <p class="lead">No datasets available for analysis.</p>
+                    <a href="{% url 'dashboard:upload_file' %}" class="btn btn-primary mt-2">
+                        <i class="fas fa-upload"></i> Upload Data
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Run analysis button click handler
+        $('#run-analysis').on('click', function() {
+            const datasetId = $('#dataset-select').val();
+            const analysisType = $('#analysis-type').val();
+            
+            if (!datasetId) {
+                showToast('Please select a dataset first', 'warning');
+                return;
+            }
+            
+            // Show loading indicator
+            $('#analysis-instructions').html('<i class="fas fa-spinner fa-spin me-2"></i> Running analysis, please wait...');
+            
+            // Hide all analysis containers
+            $('#summary-stats-container, #correlation-container, #regression-container, #clustering-container, #timeseries-container').hide();
+            
+            // In a real application, this would be an AJAX call to get analysis data
+            // For now, we'll simulate the response
+            setTimeout(function() {
+                $('#analysis-results').show();
+                
+                // Show the appropriate analysis container based on type
+                switch(analysisType) {
+                    case 'summary':
+                        $('#summary-stats-container').show();
+                        break;
+                    case 'correlation':
+                        $('#correlation-container').show();
+                        generateCorrelationHeatmap();
+                        break;
+                    case 'regression':
+                        $('#regression-container').show();
+                        generateRegressionPlot();
+                        break;
+                    case 'clustering':
+                        $('#clustering-container').show();
+                        generateClusterPlot();
+                        break;
+                    case 'timeseries':
+                        $('#timeseries-container').show();
+                        generateTimeSeriesPlots();
+                        break;
+                }
+                
+                $('#analysis-instructions').html('<i class="fas fa-check-circle me-2"></i> Analysis completed successfully!');
+                showToast('Analysis completed successfully!', 'success');
+            }, 1500);
+        });
+        
+        // Generate correlation heatmap
+        function generateCorrelationHeatmap() {
+            const ctx = document.getElementById('correlation-heatmap').getContext('2d');
+            
+            // Sample correlation data
+            const correlationData = [
+                [1.00, 0.75, -0.32],
+                [0.75, 1.00, -0.18],
+                [-0.32, -0.18, 1.00]
+            ];
+            
+            // Create heatmap data
+            const data = {
+                labels: ['Feature 1', 'Feature 2', 'Feature 3'],
+                datasets: correlationData.map((row, i) => {
+                    return {
+                        label: ['Feature 1', 'Feature 2', 'Feature 3'][i],
+                        data: row.map((value, j) => ({ x: j, y: i, v: value })),
+                        backgroundColor: (context) => {
+                            const value = context.dataset.data[context.dataIndex].v;
+                            const alpha = Math.abs(value);
+                            return value > 0 
+                                ? `rgba(46, 204, 113, ${alpha})` 
+                                : `rgba(231, 76, 60, ${alpha})`;
+                        }
+                    };
+                })
+            };
+            
+            // Create the chart
+            new Chart(ctx, {
+                type: 'scatter',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => {
+                                    const value = context.dataset.data[context.dataIndex].v.toFixed(2);
+                                    const x = context.chart.data.labels[context.dataset.data[context.dataIndex].x];
+                                    const y = context.dataset.label;
+                                    return `${y} × ${x}: ${value}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'category',
+                            labels: ['Feature 1', 'Feature 2', 'Feature 3'],
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            type: 'category',
+                            labels: ['Feature 1', 'Feature 2', 'Feature 3'].reverse(),
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Generate regression plot
+        function generateRegressionPlot() {
+            const ctx = document.getElementById('regression-plot').getContext('2d');
+            
+            // Sample regression data
+            const actualValues = [];
+            const predictedValues = [];
+            
+            for (let i = 0; i < 50; i++) {
+                const x = i * 2;
+                const actual = 2.356 + 0.723 * x - 0.312 * Math.sqrt(x) + (Math.random() * 10 - 5);
+                const predicted = 2.356 + 0.723 * x - 0.312 * Math.sqrt(x);
+                
+                actualValues.push({x: x, y: actual});
+                predictedValues.push({x: x, y: predicted});
+            }
+            
+            // Create regression plot
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Actual Values',
+                            data: actualValues,
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            pointRadius: 5
+                        },
+                        {
+                            label: 'Predicted Values',
+                            data: predictedValues,
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            pointRadius: 0,
+                            showLine: true,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Feature X'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Target Variable'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Generate cluster plot
+        function generateClusterPlot() {
+            const ctx = document.getElementById('cluster-plot').getContext('2d');
+            
+            // Generate sample cluster data
+            const clusterData = [];
+            
+            // Cluster 1
+            for (let i = 0; i < 30; i++) {
+                clusterData.push({
+                    x: Math.random() * 5 + 2,
+                    y: Math.random() * 5 + 2,
+                    cluster: 0
+                });
+            }
+            
+            // Cluster 2
+            for (let i = 0; i < 40; i++) {
+                clusterData.push({
+                    x: Math.random() * 5 + 10,
+                    y: Math.random() * 5 + 2,
+                    cluster: 1
+                });
+            }
+            
+            // Cluster 3
+            for (let i = 0; i < 30; i++) {
+                clusterData.push({
+                    x: Math.random() * 5 + 5,
+                    y: Math.random() * 5 + 10,
+                    cluster: 2
+                });
+            }
+            
+            // Create cluster plot
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Cluster 1',
+                            data: clusterData.filter(d => d.cluster === 0),
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            pointRadius: 7
+                        },
+                        {
+                            label: 'Cluster 2',
+                            data: clusterData.filter(d => d.cluster === 1),
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            pointRadius: 7
+                        },
+                        {
+                            label: 'Cluster 3',
+                            data: clusterData.filter(d => d.cluster === 2),
+                            backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                            pointRadius: 7
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Feature 1'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Feature 2'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Generate time series plots
+        function generateTimeSeriesPlots() {
+            // Generate sample time series data
+            const timeLabels = Array.from({length: 24}, (_, i) => `Month ${i+1}`);
+            
+            // Actual time series data
+            const timeData = [120, 132, 101, 134, 90, 230, 210, 120, 132, 101, 134, 90, 
+                              230, 210, 120, 132, 101, 134, 90, 230, 210, 120, 132, 101];
+                             
+            // Trend component
+            const trendData = [125, 127, 129, 131, 133, 135, 137, 139, 141, 143, 145, 147, 
+                              149, 151, 153, 155, 157, 159, 161, 163, 165, 167, 169, 171];
+                              
+            // Seasonal component
+            const seasonalData = [10, 20, -15, 5, -30, 80, 70, -5, 20, -15, 5, -30, 
+                                 80, 70, -5, 20, -15, 5, -30, 80, 70, -5, 20, -15];
+                                
+            // Forecast data
+            const forecastLabels = [...timeLabels, 'Month 25', 'Month 26', 'Month 27', 'Month 28', 'Month 29', 'Month 30'];
+            const forecastData = [...timeData, 110, 130, 105, 140, 100, 235];
+            
+            // Create time series plot
+            const timeCtx = document.getElementById('timeseries-plot').getContext('2d');
+            new Chart(timeCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Time Series Data',
+                        data: timeData,
+                        borderColor: 'rgba(244, 122, 99, 1)',
+                        backgroundColor: 'rgba(244, 122, 99, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+            
+            // Create trend plot
+            const trendCtx = document.getElementById('trend-plot').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Trend Component',
+                        data: trendData,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Create seasonal plot
+            const seasonalCtx = document.getElementById('seasonal-plot').getContext('2d');
+            new Chart(seasonalCtx, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Seasonal Component',
+                        data: seasonalData,
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 2,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: false
+                        }
+                    }
+                }
+            });
+            
+            // Create forecast plot
+            const forecastCtx = document.getElementById('forecast-plot').getContext('2d');
+            new Chart(forecastCtx, {
+                type: 'line',
+                data: {
+                    labels: forecastLabels,
+                    datasets: [{
+                        label: 'Historical Data',
+                        data: timeData,
+                        borderColor: 'rgba(244, 122, 99, 1)',
+                        backgroundColor: 'rgba(244, 122, 99, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        segment: {
+                            borderDash: context => context.p1.parsed.x >= timeData.length - 1 ? [6, 6] : undefined,
+                        }
+                    },
+                    {
+                        label: 'Forecast',
+                        data: Array(timeData.length).fill(null).concat(forecastData.slice(timeData.length)),
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,592 @@
+{% extends 'dashboard/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Data Preview - {{ upload.title }}{% endblock %}
+
+{% block page_title %}Data Preview: {{ upload.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sheet-tab {
+        cursor: pointer;
+        padding: 10px 15px;
+        border: 1px solid var(--border-color);
+        border-bottom: none;
+        border-radius: 5px 5px 0 0;
+        margin-right: 5px;
+        background-color: var(--gray-bg);
+        transition: all 0.2s;
+    }
+    .sheet-tab:hover {
+        background-color: rgba(244, 122, 99, 0.1);
+    }
+    .sheet-tab.active {
+        background-color: var(--primary);
+        color: white;
+        font-weight: bold;
+        border-color: var(--primary);
+    }
+    .column-info-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+        margin-left: 5px;
+    }
+    .data-badge {
+        font-size: 2rem;
+        color: var(--primary);
+        font-weight: 600;
+    }
+    .table thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 5;
+    }
+    .preview-table-container {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    /* Enhanced styles */
+    .stats-badge {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .stats-badge.min {
+        background-color: rgba(231, 76, 60, 0.15);
+        color: #c0392b;
+    }
+    .stats-badge.max {
+        background-color: rgba(46, 204, 113, 0.15);
+        color: #27ae60;
+    }
+    .stats-badge.avg {
+        background-color: rgba(52, 152, 219, 0.15);
+        color: #2980b9;
+    }
+    .stats-badge.null {
+        background-color: rgba(243, 156, 18, 0.15);
+        color: #d35400;
+    }
+    .data-summary-box {
+        background-color: var(--gray-bg);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s;
+        border-left: 4px solid var(--primary);
+    }
+    .data-summary-box:hover {
+        box-shadow: 0 0.15rem 1.2rem 0 rgba(33, 40, 50, 0.15);
+    }
+    .column-type-icon {
+        font-size: 1rem;
+        margin-right: 0.5rem;
+    }
+    .sample-data-pill {
+        display: inline-block;
+        background-color: rgba(0,0,0,0.05);
+        font-family: monospace;
+        padding: 0.25rem 0.5rem;
+        margin: 0.15rem;
+        border-radius: 2rem;
+        font-size: 0.8rem;
+    }
+    .shimmer-effect {
+        position: relative;
+        overflow: hidden;
+    }
+    .shimmer-effect::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        transform: translateX(-100%);
+        background-image: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0) 0,
+            rgba(255, 255, 255, 0.2) 20%,
+            rgba(255, 255, 255, 0.5) 60%,
+            rgba(255, 255, 255, 0)
+        );
+        animation: shimmer 2.5s infinite;
+    }
+    @keyframes shimmer {
+        100% { transform: translateX(100%); }
+    }
+    .chart-container {
+        height: 200px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+    .stat-card {
+        border-radius: 0.5rem;
+        box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+    }
+    .memory-usage-indicator {
+        height: 4px;
+        background: linear-gradient(to right, #2ecc71, #f39c12, #e74c3c);
+        border-radius: 2px;
+        margin-top: 5px;
+    }
+    .tab-button {
+        border: none;
+        background: none;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+    }
+    .tab-button.active {
+        border-bottom: 3px solid var(--primary);
+        font-weight: 600;
+    }
+    .tab-button:hover {
+        background-color: rgba(0,0,0,0.03);
+    }
+    .data-quality-indicator {
+        width: 100%;
+        height: 6px;
+        background-color: #f1f1f1;
+        border-radius: 3px;
+        margin: 5px 0;
+    }
+    .data-quality-fill {
+        height: 100%;
+        border-radius: 3px;
+        background-color: #4CAF50;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card shadow h-100">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center" style="background-color: var(--primary); color: white;">
+                <h6 class="m-0 font-weight-bold">File Information</h6>
+                <span class="badge bg-light text-dark">{{ upload.get_extension|upper }}</span>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 120px;" class="text-muted">Title:</th>
+                            <td class="fw-medium">{{ upload.title }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">File:</th>
+                            <td><span class="badge rounded-pill bg-light text-dark">{{ upload.file.name }}</span></td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Uploaded:</th>
+                            <td>{{ upload.uploaded_at|date:"F j, Y, g:i a" }}</td>
+                        </tr>
+                        <tr>
+                            <th class="text-muted">Description:</th>
+                            <td>{{ upload.description|default:"--" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="card shadow stat-card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Rows</h6>
+                        <div class="data-badge mb-0">{{ stats.row_count }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow stat-card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Columns</h6>
+                        <div class="data-badge mb-0">{{ stats.column_count }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow stat-card">
+                    <div class="card-body text-center">
+                        <h6 class="text-muted mb-2">Memory Usage</h6>
+                        <div class="data-badge mb-0">{{ stats.memory_usage|floatformat:2 }} MB</div>
+                        <div class="memory-usage-indicator"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-body p-0">
+                        <div class="d-flex border-bottom">
+                            <button class="tab-button active flex-grow-1" data-target="actions-tab">
+                                <i class="fas fa-cogs me-1"></i> Actions
+                            </button>
+                            <button class="tab-button flex-grow-1" data-target="charts-tab">
+                                <i class="fas fa-chart-bar me-1"></i> Quick Charts
+                            </button>
+                        </div>
+                        <div id="actions-tab" class="tab-content p-3">
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="{% url 'dashboard:upload_file' %}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-upload fa-sm"></i> Upload New
+                                </a>
+                                <a href="{% url 'dashboard:upload_list' %}" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-list fa-sm"></i> All Uploads
+                                </a>
+                                <button id="analyze-btn" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-chart-line fa-sm"></i> Analyze
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info" id="export-btn">
+                                    <i class="fas fa-download fa-sm"></i> Export
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="refresh-btn">
+                                    <i class="fas fa-sync fa-sm"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div id="charts-tab" class="tab-content p-3" style="display: none;">
+                            <div class="chart-container">
+                                <canvas id="quick-overview-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold" style="color: var(--primary);">
+            Data Preview
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="preview-table-container">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead>
+                        <tr>
+                            {% for col in columns %}
+                                <th>{{ col }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in sample_data %}
+                            <tr>
+                                {% for col in columns %}
+                                    <td>{{ row|get_item:col }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="text-muted text-center mt-3">
+            <small>* Showing first 50 rows of data</small>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3" style="background-color: var(--gray-bg);">
+        <h6 class="m-0 font-weight-bold" style="color: var(--primary);">Column Analysis</h6>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-12">
+                <input type="text" id="column-filter" class="form-control" placeholder="Search for columns...">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="column-stats-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Column Name</th>
+                        <th>Data Type</th>
+                        <th>Statistics / Sample Data</th>
+                        <th>Data Quality</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for col in column_stats %}
+                    <tr class="column-row">
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <strong>{{ col.name }}</strong>
+                            {% if 'int' in col.type or 'float' in col.type %}
+                                <i class="fas fa-hashtag column-type-icon text-primary"></i>
+                                <span class="badge bg-primary column-info-badge">Numeric</span>
+                            {% elif 'date' in col.type %}
+                                <i class="fas fa-calendar-alt column-type-icon text-success"></i>
+                                <span class="badge bg-success column-info-badge">Date</span>
+                            {% elif 'bool' in col.type %}
+                                <i class="fas fa-toggle-on column-type-icon text-warning"></i>
+                                <span class="badge bg-warning text-dark column-info-badge">Boolean</span>
+                            {% elif 'object' in col.type %}
+                                <i class="fas fa-font column-type-icon text-secondary"></i>
+                                <span class="badge bg-secondary column-info-badge">Text</span>
+                            {% else %}
+                                <i class="fas fa-question column-type-icon text-info"></i>
+                                <span class="badge bg-info column-info-badge">Other</span>
+                            {% endif %}
+                        </td>
+                        <td><code>{{ col.type }}</code></td>
+                        <td>
+                            {% if 'int' in col.type or 'float' in col.type %}
+                                <div>
+                                    <span class="stats-badge min">
+                                        <i class="fas fa-arrow-down"></i> Min: {{ col.min }}
+                                    </span>
+                                    <span class="stats-badge max">
+                                        <i class="fas fa-arrow-up"></i> Max: {{ col.max }}
+                                    </span>
+                                    <span class="stats-badge avg">
+                                        <i class="fas fa-equals"></i> Mean: {{ col.mean }}
+                                    </span>
+                                </div>
+                            {% elif 'object' in col.type %}
+                                {% if col.unique_values %}
+                                <div>
+                                    <span class="badge bg-info">{{ col.unique_values }} unique values</span>
+                                    <span class="badge bg-secondary ms-2">Most common: {{ col.most_common }}</span>
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                            <span class="stats-badge null">
+                                <i class="fas fa-times-circle"></i> Nulls: {{ col.null_count }} ({{ col.null_percentage }}%)
+                            </span>
+                        </td>
+                        <td>
+                            <div class="data-quality-indicator">
+                                <div class="data-quality-fill" style="width: {{ col.null_percentage|subtract_from:100 }}%;
+                                    background-color: 
+                                    {% if col.null_percentage < 5 %}#4CAF50
+                                    {% elif col.null_percentage < 20 %}#FFC107
+                                    {% else %}#F44336{% endif %};"></div>
+                            </div>
+                            <small class="text-muted">{{ col.null_percentage|subtract_from:100 }}% complete</small>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Add column filtering functionality
+        $("#column-filter").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#column-stats-table tbody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+        
+        // Tab functionality
+        $('.tab-button').on('click', function() {
+            // Remove active class from all tabs
+            $('.tab-button').removeClass('active');
+            $(this).addClass('active');
+            
+            // Hide all tab contents
+            $('.tab-content').hide();
+            // Show the target tab
+            $('#' + $(this).data('target')).show();
+            
+            // If it's the charts tab, initialize charts
+            if ($(this).data('target') === 'charts-tab') {
+                initializeQuickChart();
+            }
+        });
+        
+        // Export button functionality
+        $('#export-btn').on('click', function() {
+            // Show toast notification
+            showToast('Preparing data export...', 'info');
+            
+            setTimeout(function() {
+                showToast('Data exported successfully!', 'success');
+            }, 1500);
+        });
+        
+        // Refresh button functionality
+        $('#refresh-btn').on('click', function() {
+            const button = $(this);
+            button.prop('disabled', true);
+            button.html('<i class="fas fa-spin fa-spinner fa-sm"></i> Refreshing');
+            
+            setTimeout(function() {
+                location.reload();
+            }, 800);
+        });
+        
+        // Analysis button functionality
+        $('#analyze-btn').on('click', function() {
+            showToast('Starting deep data analysis...', 'info');
+            
+            // In a real implementation, this would trigger an AJAX call
+            // For now, we'll just show a simulated response after a delay
+            setTimeout(function() {
+                showToast('Analysis complete! See updated statistics.', 'success');
+                $('.tab-button[data-target="charts-tab"]').click();
+            }, 2000);
+        });
+        
+        // Highlight columns on hover for better readability
+        $('.preview-table-container table').on('mouseover', 'td', function() {
+            const index = $(this).index();
+            $(this).closest('table').find('tr').each(function() {
+                $(this).find('td:eq(' + index + ')').addClass('bg-light');
+                $(this).find('th:eq(' + index + ')').addClass('bg-light');
+            });
+        }).on('mouseout', 'td', function() {
+            const index = $(this).index();
+            $(this).closest('table').find('tr').each(function() {
+                $(this).find('td:eq(' + index + ')').removeClass('bg-light');
+                $(this).find('th:eq(' + index + ')').removeClass('bg-light');
+            });
+        });
+        
+        // Create toast function
+        window.showToast = function(message, type) {
+            // Create toast container if it doesn't exist
+            if (!$('#toastContainer').length) {
+                $('body').append('<div id="toastContainer" class="toast-container position-fixed bottom-0 end-0 p-3"></div>');
+            }
+            
+            const toastId = 'toast-' + Math.random().toString(36).substr(2, 9);
+            const bgClass = type === 'success' ? 'bg-success' : 
+                          type === 'error' ? 'bg-danger' :
+                          type === 'warning' ? 'bg-warning' : 'bg-info';
+            
+            const toast = `
+                <div id="${toastId}" class="toast align-items-center ${bgClass} text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            $('#toastContainer').append(toast);
+            
+            const toastElement = document.getElementById(toastId);
+            const bsToast = new bootstrap.Toast(toastElement, {
+                animation: true,
+                autohide: true,
+                delay: 3000
+            });
+            
+            bsToast.show();
+        };
+        
+        // Chart initialization function
+        function initializeQuickChart() {
+            // Get column stats data for visualization
+            const columnTypes = {
+                numeric: 0,
+                text: 0,
+                date: 0,
+                boolean: 0,
+                other: 0
+            };
+            
+            // Count column types
+            $('#column-stats-table tbody tr').each(function() {
+                const typeCell = $(this).find('td:nth-child(3)').text();
+                
+                if (typeCell.includes('int') || typeCell.includes('float')) {
+                    columnTypes.numeric++;
+                } else if (typeCell.includes('object')) {
+                    columnTypes.text++;
+                } else if (typeCell.includes('date')) {
+                    columnTypes.date++;
+                } else if (typeCell.includes('bool')) {
+                    columnTypes.boolean++;
+                } else {
+                    columnTypes.other++;
+                }
+            });
+            
+            const ctx = document.getElementById('quick-overview-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.quickChart) {
+                window.quickChart.destroy();
+            }
+            
+            window.quickChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Numeric', 'Text', 'Date', 'Boolean', 'Other'],
+                    datasets: [{
+                        label: 'Column Types',
+                        data: [
+                            columnTypes.numeric,
+                            columnTypes.text,
+                            columnTypes.date,
+                            columnTypes.boolean,
+                            columnTypes.other
+                        ],
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(153, 102, 255, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(153, 102, 255, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Column Type Distribution'
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

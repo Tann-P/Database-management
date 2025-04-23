@@ -1,0 +1,70 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Upload Debug - Dashboard{% endblock %}
+
+{% block page_title %}File Upload Diagnostics{% endblock %}
+
+{% block content %}
+<div class="card shadow mb-4">
+    <div class="card-header py-3" style="background-color: var(--primary); color: white;">
+        <h6 class="m-0 font-weight-bold">File Upload Diagnostic Information</h6>
+    </div>
+    <div class="card-body">
+        {% if error %}
+        <div class="alert alert-danger">
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+
+        <h5 class="mb-3">Media Settings</h5>
+        <table class="table table-bordered">
+            <tr>
+                <th style="width: 30%;">Media Root Path</th>
+                <td>{{ media_root }}</td>
+            </tr>
+            <tr>
+                <th>Media Root Exists</th>
+                <td>
+                    {% if media_root_exists %}
+                    <span class="badge bg-success">Yes</span>
+                    {% else %}
+                    <span class="badge bg-danger">No</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Upload Directory Path</th>
+                <td>{{ upload_dir }}</td>
+            </tr>
+            <tr>
+                <th>Upload Directory Exists</th>
+                <td>
+                    {% if upload_dir_exists %}
+                    <span class="badge bg-success">Yes</span>
+                    {% else %}
+                    <span class="badge bg-danger">No</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Write Permission</th>
+                <td>
+                    {% if write_permission %}
+                    <span class="badge bg-success">Yes</span>
+                    {% else %}
+                    <span class="badge bg-danger">No</span>
+                    {% if write_error %}<br><small class="text-danger">{{ write_error }}</small>{% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+
+        <div class="mt-4">
+            <h5 class="mb-3">Actions</h5>
+            <a href="{% url 'dashboard:upload_file' %}" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Try Upload Again
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'dashboard/public_base.html' %}
+
+{% block title %}Registration Complete | Registration System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="display-5 fw-bold text-success">Registration Successful</h2>
+            <p class="lead">Your registration has been completed successfully</p>
+        </div>
+    </div>
+
+    <!-- Success Card -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow border-left-success mb-4">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                        <h4 class="mb-3">Thank You for Registering!</h4>
+                        <p class="mb-0">Your registration details have been saved successfully.</p>
+                    </div>
+                    
+                    <div class="registration-details p-4 bg-light rounded mb-4">
+                        <h5 class="mb-3">Registration Details</h5>
+                        <div class="row mb-2">
+                            <div class="col-md-4 fw-bold">Full Name:</div>
+                            <div class="col-md-8">{{ registration.full_name }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-4 fw-bold">Citizen ID:</div>
+                            <div class="col-md-8">{{ registration.citizen_id }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-4 fw-bold">Phone Number:</div>
+                            <div class="col-md-8">{{ registration.phone_number }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-md-4 fw-bold">Email:</div>
+                            <div class="col-md-8">{{ registration.email }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 fw-bold">Registration Date:</div>
+                            <div class="col-md-8">{{ registration.registered_at|date:"F d, Y H:i" }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <a href="/" class="btn btn-outline-primary">
+                            <i class="fas fa-home me-2"></i> Go to Home
+                        </a>
+                        <a href="{% url 'dashboard:register_user' %}" class="btn btn-success ms-2">
+                            <i class="fas fa-user-plus me-2"></i> Register Another User
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Additional Information -->
+    <div class="row mt-4">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>What's Next?</h5>
+                    <p class="card-text">Thank you for registering with our system. Your information has been stored securely. For administrative access or to view all registrations, please contact the system administrator.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

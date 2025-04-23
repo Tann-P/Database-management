@@ -1,0 +1,230 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Data Visualization - Dashboard{% endblock %}
+
+{% block page_title %}Data Visualization{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center" style="background-color: var(--primary); color: white;">
+                <h6 class="m-0 font-weight-bold">Data Visualization Tools</h6>
+            </div>
+            <div class="card-body">
+                {% if uploads %}
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="chart-select" class="form-label">Select Dataset</label>
+                            <select class="form-select" id="chart-select">
+                                <option value="">-- Select a dataset --</option>
+                                {% for upload in uploads %}
+                                <option value="{{ upload.id }}">{{ upload.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="chart-type" class="form-label">Chart Type</label>
+                            <select class="form-select" id="chart-type">
+                                <option value="bar">Bar Chart</option>
+                                <option value="line">Line Chart</option>
+                                <option value="pie">Pie Chart</option>
+                                <option value="scatter">Scatter Plot</option>
+                                <option value="histogram">Histogram</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="chart-action" class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="button" class="btn btn-primary form-control" id="generate-chart">
+                                    <i class="fas fa-chart-line me-2"></i> Generate Chart
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-info" id="chart-instructions">
+                            <i class="fas fa-info-circle me-2"></i> 
+                            Select a dataset and chart type, then click "Generate Chart" to visualize your data.
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="chart-container" style="height: 500px; width: 100%;">
+                    <!-- Chart will be rendered here -->
+                    <canvas id="visualization-chart"></canvas>
+                </div>
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background-color: rgba(244, 122, 99, 0.1);">
+                        <i class="fas fa-chart-line fa-3x" style="color: var(--primary);"></i>
+                    </div>
+                    <p class="lead">No datasets available for visualization.</p>
+                    <a href="{% url 'dashboard:upload_file' %}" class="btn btn-primary mt-2">
+                        <i class="fas fa-upload"></i> Upload Data
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        let chart = null;
+        
+        // Generate chart button click handler
+        $('#generate-chart').on('click', function() {
+            const datasetId = $('#chart-select').val();
+            const chartType = $('#chart-type').val();
+            
+            if (!datasetId) {
+                showToast('Please select a dataset first', 'warning');
+                return;
+            }
+            
+            // Show loading indicator
+            $('#chart-instructions').html('<i class="fas fa-spinner fa-spin me-2"></i> Loading data and generating chart...');
+            
+            // In a real application, this would be an AJAX call to get chart data
+            // For now, we'll simulate the response
+            setTimeout(function() {
+                generateDemoChart(chartType);
+                $('#chart-instructions').html('<i class="fas fa-check-circle me-2"></i> Chart generated successfully!');
+                showToast('Chart generated successfully!', 'success');
+            }, 1200);
+        });
+        
+        function generateDemoChart(chartType) {
+            // Destroy previous chart if it exists
+            if (chart) {
+                chart.destroy();
+            }
+            
+            const ctx = document.getElementById('visualization-chart');
+            let data = {};
+            
+            // Generate demo data based on chart type
+            switch(chartType) {
+                case 'bar':
+                    data = {
+                        labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+                        datasets: [{
+                            label: 'Monthly Sales',
+                            data: [65, 59, 80, 81, 56, 55],
+                            backgroundColor: 'rgba(244, 122, 99, 0.7)',
+                            borderColor: 'rgb(244, 122, 99)',
+                            borderWidth: 1
+                        }]
+                    };
+                    break;
+                    
+                case 'line':
+                    data = {
+                        labels: ['January', 'February', 'March', 'April', 'May', 'June'],
+                        datasets: [{
+                            label: 'Monthly Revenue',
+                            data: [65, 59, 80, 81, 56, 55],
+                            fill: false,
+                            borderColor: 'rgb(244, 122, 99)',
+                            tension: 0.1
+                        }]
+                    };
+                    break;
+                    
+                case 'pie':
+                    data = {
+                        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+                        datasets: [{
+                            label: 'Product Categories',
+                            data: [12, 19, 3, 5, 2, 3],
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.7)',
+                                'rgba(54, 162, 235, 0.7)',
+                                'rgba(255, 206, 86, 0.7)',
+                                'rgba(75, 192, 192, 0.7)',
+                                'rgba(153, 102, 255, 0.7)',
+                                'rgba(255, 159, 64, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)',
+                                'rgba(75, 192, 192, 1)',
+                                'rgba(153, 102, 255, 1)',
+                                'rgba(255, 159, 64, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    };
+                    break;
+                    
+                case 'scatter':
+                    const scatterData = [];
+                    for (let i = 0; i < 50; i++) {
+                        scatterData.push({
+                            x: Math.random() * 100,
+                            y: Math.random() * 100
+                        });
+                    }
+                    
+                    data = {
+                        datasets: [{
+                            label: 'Scatter Dataset',
+                            data: scatterData,
+                            backgroundColor: 'rgba(244, 122, 99, 0.7)'
+                        }]
+                    };
+                    break;
+                    
+                case 'histogram':
+                    const histData = [];
+                    for (let i = 0; i < 1000; i++) {
+                        histData.push(Math.floor(Math.random() * 100));
+                    }
+                    
+                    data = {
+                        labels: Array.from({length: 10}, (_, i) => `${i*10}-${(i+1)*10}`),
+                        datasets: [{
+                            label: 'Frequency Distribution',
+                            data: [65, 125, 190, 212, 125, 90, 75, 55, 40, 20],
+                            backgroundColor: 'rgba(244, 122, 99, 0.7)',
+                            borderColor: 'rgb(244, 122, 99)',
+                            borderWidth: 1
+                        }]
+                    };
+                    break;
+            }
+            
+            // Create the chart
+            chart = new Chart(ctx, {
+                type: chartType === 'histogram' ? 'bar' : chartType,
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Data Visualization'
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

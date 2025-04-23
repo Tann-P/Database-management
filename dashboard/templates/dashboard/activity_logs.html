@@ -1,0 +1,349 @@
+{% extends 'dashboard/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Activity Logs | Database Management System{% endblock %}
+
+{% block page_title %}Activity Logs{% endblock %}
+
+{% block content %}
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800 page-heading">Activity Logs</h1>
+</div>
+
+<!-- Messages -->
+{% if messages %}
+<div class="alert-container mb-4">
+    {% for message in messages %}
+    <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Filter Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold" style="color: var(--primary);">Filter Activity Logs</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="action_type" class="form-label">Action Type</label>
+                <select class="form-select" id="action_type" name="action_type">
+                    <option value="">All Action Types</option>
+                    {% for code, name in action_types %}
+                    <option value="{{ code }}" {% if selected_action_type == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="user" class="form-label">User</label>
+                <select class="form-select" id="user" name="user">
+                    <option value="">All Users</option>
+                    {% for username in unique_users %}
+                    {% if username %}
+                    <option value="{{ username }}" {% if selected_user == username %}selected{% endif %}>{{ username }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">From Date</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">To Date</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+            </div>
+            <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter me-1"></i> Filter
+                </button>
+                <a href="{% url 'dashboard:activity_logs' %}" class="btn btn-secondary ms-2">
+                    <i class="fas fa-times me-1"></i> Clear Filters
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Activity Logs Table Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+        <h6 class="m-0 font-weight-bold" style="color: var(--primary);">Activity Logs</h6>
+        <div class="dropdown no-arrow">
+            <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+               data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                 aria-labelledby="dropdownMenuLink">
+                <div class="dropdown-header">Actions:</div>
+                <a class="dropdown-item" href="#" id="refreshBtn">
+                    <i class="fas fa-sync-alt me-2"></i> Refresh
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#" id="exportCsvBtn">
+                    <i class="fas fa-file-csv me-2"></i> Export to CSV
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped" width="100%" cellspacing="0" id="activityLogsTable">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Action Type</th>
+                        <th>Description</th>
+                        <th>User</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.timestamp|date:"M d, Y H:i:s" }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if log.action_type == 'registration' %}bg-success
+                                {% elif log.action_type == 'login' %}bg-primary
+                                {% elif log.action_type == 'export' %}bg-warning
+                                {% elif log.action_type == 'upload' %}bg-info
+                                {% elif log.action_type == 'delete' %}bg-danger
+                                {% else %}bg-secondary{% endif %}
+                            ">
+                                {{ log.get_action_type_display }}
+                            </span>
+                        </td>
+                        <td>{{ log.description }}</td>
+                        <td>{{ log.user|default:"Anonymous" }}</td>
+                        <td>{{ log.ip_address|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">No activity logs found matching the criteria.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if logs.has_other_pages %}
+        <div class="mt-3 d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if logs.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if selected_action_type %}&action_type={{ selected_action_type }}{% endif %}{% if selected_user %}&user={{ selected_user }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.previous_page_number }}{% if selected_action_type %}&action_type={{ selected_action_type }}{% endif %}{% if selected_user %}&user={{ selected_user }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in logs.paginator.page_range %}
+                    {% if logs.number == num %}
+                    <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                    {% elif num > logs.number|add:'-3' and num < logs.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?page={{ num }}{% if selected_action_type %}&action_type={{ selected_action_type }}{% endif %}{% if selected_user %}&user={{ selected_user }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if logs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.next_page_number }}{% if selected_action_type %}&action_type={{ selected_action_type }}{% endif %}{% if selected_user %}&user={{ selected_user }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ logs.paginator.num_pages }}{% if selected_action_type %}&action_type={{ selected_action_type }}{% endif %}{% if selected_user %}&user={{ selected_user }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistics Card -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold" style="color: var(--primary);">Activity Statistics</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Total Logs</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ logs.count }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-success h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                    Registrations</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ logs|dictsortreversed:"timestamp"|dictsort:"action_type"|field_filter:"action_type:registration"|length }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-user-plus fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-info h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Exports</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ logs|dictsortreversed:"timestamp"|dictsort:"action_type"|field_filter:"action_type:export"|length }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-file-export fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-warning h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Views</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ logs|dictsortreversed:"timestamp"|dictsort:"action_type"|field_filter:"action_type:view"|length }}
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-eye fa-2x text-gray-300"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize DataTable for better filtering and sorting
+    $('#activityLogsTable').DataTable({
+        "paging": false, // We use Django's pagination
+        "ordering": true,
+        "info": true,
+        "searching": true,
+        "responsive": true,
+        "columnDefs": [
+            { "orderable": false, "targets": 4 } // Disable sorting on IP column
+        ]
+    });
+    
+    // Refresh button functionality
+    $('#refreshBtn').click(function(e) {
+        e.preventDefault();
+        window.location.reload();
+    });
+    
+    // Export to CSV functionality
+    $('#exportCsvBtn').click(function(e) {
+        e.preventDefault();
+        
+        // Get current table data
+        var csvContent = "data:text/csv;charset=utf-8,";
+        
+        // Get headers
+        var headers = [];
+        $('#activityLogsTable thead th').each(function() {
+            headers.push($(this).text());
+        });
+        csvContent += headers.join(',') + "\r\n";
+        
+        // Get rows
+        $('#activityLogsTable tbody tr').each(function() {
+            var row = [];
+            $(this).find('td').each(function(index) {
+                // Special handling for the badge column (index 1)
+                if (index === 1) {
+                    row.push($(this).text().trim());
+                } else {
+                    row.push('"' + $(this).text().trim().replace(/"/g, '""') + '"');
+                }
+            });
+            csvContent += row.join(',') + "\r\n";
+        });
+        
+        // Create download link
+        var encodedUri = encodeURI(csvContent);
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "activity_logs_" + new Date().toISOString().slice(0,10) + ".csv");
+        document.body.appendChild(link);
+        
+        // Download it
+        link.click();
+        document.body.removeChild(link);
+    });
+    
+    // Date range validation
+    $('#date_to').on('change', function() {
+        var dateFrom = $('#date_from').val();
+        var dateTo = $(this).val();
+        
+        if (dateFrom && dateTo && new Date(dateTo) < new Date(dateFrom)) {
+            alert('To date cannot be before From date');
+            $(this).val('');
+        }
+    });
+    
+    $('#date_from').on('change', function() {
+        var dateFrom = $(this).val();
+        var dateTo = $('#date_to').val();
+        
+        if (dateFrom && dateTo && new Date(dateTo) < new Date(dateFrom)) {
+            alert('From date cannot be after To date');
+            $(this).val('');
+        }
+    });
+});
+</script>
+{% endblock %}

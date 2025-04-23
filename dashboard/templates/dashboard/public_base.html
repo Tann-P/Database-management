@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Registration System{% endblock %}</title>
+    
+    <!-- Meta tags for better SEO and social sharing -->
+    <meta name="description" content="User registration system">
+    <meta name="theme-color" content="#f47a63">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAC5ElEQVR4AcWWA5AcURSGz9q2bdu2bdtGbdu2bdu2bTO7TZ653fdmdnrvhDf5itxz/jnnnvsn4ngCzOAVBEYwwrcsn0sRNDMIVqBa+P1JQIuQESA0AlUIltZPdQneCAa3JEmQ6wYQPKGWMKVPQNDkru+2ZwSOStKgYP9vdQoYlYZBIAY3SVs4fS6LJZz2VhHwp7IgTtAP2ZvnHkDQ6B9kQJxAevddj1K7jscs1w0IiFPfpHZ7Co5bxicYAwR9knIkssfTiYASMs6AeIGkhW5BAPGDLNKEBMUIDPfGAKmArMJQ+RRoKK9AK0Xg/xYgBzK0kZ+BVJCtJF3gv4yCWMjSUFkRaoJM2UKCsjoQS+Jfm1AKZHGLAHwlOUvSCnmf0CRAXxMhFvLtzgoCMOGlgsMkTeF9iPXdRYUERowCoYQZmecHoqf2eGZrnh9rOB7VHlS1Klgnw0xu6/HU3jz/Yn2UMAJn7M1zIXu5ySoEDPuCQBwsWaSMOVvkQbbq45Ch2GCVM0C9zbkd8rTOjwxVRqsajfrAe6AmGs/mThE4JMnDJ4ElaRnsLfIhW41xaLjojoq5SG+eG1lqjUP6AoN4USJGwJQlaZCmaJCu0CBkqDQS2evY0GgmXm68rUJg34OnQp7mjWh9Y5m6EU1eO1QkPfXTLeGJxAgCpvRC9mbq5+JWwjMsDzJXG4O0+QcoL0I7LeHRTAJEgTXpmeytCiBzjbHIUKA/ghca7nAW6JopZGepg51FPmSvPwl6LJGylhs+mHKc8CR42KHicKQv3B9pc/dG+jqT5BGA9SptQeYrPJrtfPASNxcd8NjqFHI0UiPgWZMEp3N0hr2RFb4ydMWRbkuEeBMgnISNxD5IUCcQyicA3XYUHKMmTAzXYV/bpdB9mypEwDPhVWZ71n7+t+c75iaG7CXOE1/48MCwNFSGmskQl+cimxXfC4xP7fyX3G3zY/0wO+I9TOVtnA/e18HG6/BCt00vRnmNLvvnax8SsIXLf8kfrJQBrOB2jWoAAAAASUVORK5CYII=">
+    
+    <!-- Preconnect to external domains to improve load time -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
+    <!-- Bootstrap CSS with integrity hash for security -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous">
+    
+    <!-- Google Fonts with display=swap for better performance -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom styles -->
+    <style>
+        :root {
+            --primary: #f47a63;
+            --primary-light: #f69c8c;
+            --primary-dark: #e05a43;
+            --secondary: #6c757d;
+            --light: #ffffff;
+            --dark: #212529;
+            --gray-bg: #f8f9fa;
+            --border-color: #e9ecef;
+            --success: #2ecc71;
+            --info: #3498db;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --transition-speed: 0.3s;
+        }
+        
+        body {
+            background-color: var(--gray-bg);
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 0.9rem;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        /* Improved Loading State */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 5px solid var(--primary);
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Content Wrapper */
+        #content-wrapper {
+            flex: 1 1 auto;
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-color: var(--gray-bg);
+            transition: all var(--transition-speed);
+        }
+        
+        /* Main Content - improved spacing */
+        .content-container {
+            padding: 2rem 1.5rem;
+        }
+        
+        @media (min-width: 768px) {
+            .content-container {
+                padding: 3rem 2rem;
+            }
+        }
+        
+        /* Public Header */
+        .public-header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 0.15rem 0.5rem rgba(0, 0, 0, 0.1);
+        }
+
+        .public-header h1 {
+            font-weight: 600;
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.15rem 1.2rem 0 rgba(33, 40, 50, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+        }
+        
+        .card-header {
+            background-color: white;
+            font-weight: 500;
+            border-bottom: 1px solid rgba(0,0,0,.05);
+            padding: 1.25rem 1.5rem;
+        }
+        
+        .card-footer {
+            background-color: white;
+            border-top: 1px solid rgba(0,0,0,.05);
+            padding: 1rem 1.5rem;
+        }
+        
+        /* Buttons */
+        .btn {
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.35rem;
+            transition: all 0.2s;
+        }
+        
+        .btn:focus {
+            box-shadow: 0 0 0 0.25rem rgba(58, 134, 255, 0.25);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        /* Improved Form controls */
+        .form-control {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 0.35rem;
+            border: 1px solid var(--border-color);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(58, 134, 255, 0.25);
+            border-color: var(--primary);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--light);
+            padding: 1.5rem 0;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Page Loading Indicator -->
+    <div class="loading-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <!-- Public Header -->
+    <header class="public-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>
+                    <i class="fas fa-user-plus me-2"></i>
+                    Registration System
+                </h1>
+                <div>
+                    <a href="/" class="btn btn-outline-light">
+                        <i class="fas fa-home me-1"></i> Home
+                    </a>
+                    <a href="{% url 'dashboard:register_user' %}" class="btn btn-light ms-2">
+                        <i class="fas fa-user-plus me-1"></i> Register
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Content Wrapper -->
+    <div id="content-wrapper">
+        <!-- Toast Notification Container -->
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1100">
+            <div id="toastNotification" class="toast hide" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong class="me-auto" id="toastTitle">Notification</strong>
+                    <small id="toastTime">Just now</small>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body" id="toastMessage">
+                    This is a notification message.
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="content-container">
+            {% block content %}{% endblock %}
+        </div>
+        <!-- End of Page Content -->
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="text-center">
+                <p class="mb-0">© 2025 Registration System. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.3.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+    
+    <!-- Core JS -->
+    <script>
+    $(document).ready(function() {
+        // Hide loading spinner when page is fully loaded
+        $(".loading-overlay").fadeOut();
+        
+        // Add fade-in animation to cards
+        $(".card").addClass("fade-in");
+        
+        // Add event listener for form submissions with client-side validation
+        $('form').on('submit', function(event) {
+            if (!this.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                showToast('Please check the form for errors.', 'error');
+            }
+            $(this).addClass('was-validated');
+        });
+    });
+
+    // Toast notification system
+    window.showToast = function(message, type = 'info') {
+        const toastId = 'toast-' + Date.now();
+        const bgClass = type === 'success' ? 'bg-success' : 
+                        type === 'warning' ? 'bg-warning' : 
+                        type === 'error' ? 'bg-danger' : 'bg-info';
+        
+        const iconClass = type === 'success' ? 'fa-check-circle' : 
+                          type === 'warning' ? 'fa-exclamation-triangle' : 
+                          type === 'error' ? 'fa-times-circle' : 'fa-info-circle';
+                          
+        const toast = `
+            <div id="${toastId}" class="toast align-items-center ${bgClass} text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas ${iconClass} me-2"></i> ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        $('#toastContainer').append(toast);
+        const toastElement = new bootstrap.Toast(document.getElementById(toastId), {
+            delay: 3000
+        });
+        toastElement.show();
+        
+        // Auto-remove from DOM after hiding
+        $(`#${toastId}`).on('hidden.bs.toast', function () {
+            $(this).remove();
+        });
+    };
+    </script>
+    
+    <!-- Page specific JavaScript -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

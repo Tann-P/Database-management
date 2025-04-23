@@ -1,0 +1,492 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Dashboard | Database Management System{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Page Heading -->
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800 page-heading">Dashboard</h1>
+    <a href="{% url 'dashboard:upload_file' %}" class="d-sm-inline-block btn btn-primary shadow-sm">
+        <i class="fas fa-upload fa-sm text-white-50 me-1"></i> Upload New Data
+    </a>
+</div>
+
+<!-- Content Row - Dashboard Cards -->
+<div class="row">
+    <!-- Total Uploads Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Uploads</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ upload_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-database fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Files Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Storage Used</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_size }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-hdd fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Upload Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Latest Upload
+                        </div>
+                        <div class="row no-gutters align-items-center">
+                            <div class="col">
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">{{ latest_upload_date }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Formats Card -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            File Formats</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ file_formats_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Row - Main Components -->
+<div class="row">
+    <!-- Recent Uploads -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold" style="color: var(--primary);">Recent Uploads</h6>
+                <div class="dropdown no-arrow">
+                    <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                       data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end shadow animated--fade-in"
+                         aria-labelledby="dropdownMenuLink">
+                        <div class="dropdown-header">Actions:</div>
+                        <a class="dropdown-item" href="{% url 'dashboard:upload_list' %}">View All</a>
+                        <a class="dropdown-item" href="{% url 'dashboard:upload_file' %}">Upload New</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'dashboard:export' %}">Export List</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Filename</th>
+                                <th>File Type</th>
+                                <th>Size</th>
+                                <th>Upload Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for upload in recent_uploads %}
+                            <tr>
+                                <td>{{ upload.filename }}</td>
+                                <td><span class="badge {% if upload.get_extension == '.xlsx' or upload.get_extension == '.xls' %}bg-success{% elif upload.get_extension == '.csv' %}bg-primary{% elif upload.get_extension == '.json' %}bg-warning{% else %}bg-info{% endif %}">{{ upload.get_extension }}</span></td>
+                                <td>{% if upload.file %}{{ upload.file.size|filesizeformat }}{% else %}N/A{% endif %}</td>
+                                <td>{{ upload.uploaded_at|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'dashboard:data_preview' upload.id %}" class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if upload.file %}
+                                    <a href="{{ upload.file.url }}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="#" class="btn btn-sm btn-outline-danger btn-delete" data-id="{{ upload.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center">No uploads found. <a href="{% url 'dashboard:upload_file' %}">Upload your first data file now</a>.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Quick Stats -->
+    <div class="col-xl-4 col-lg-5">
+        <!-- File Type Distribution Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-2 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold" style="color: var(--primary);">File Type Distribution</h6>
+                <div class="dropdown">
+                    <a class="text-muted" href="#" role="button" id="chartOptionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="chartOptionsDropdown">
+                        <li><a class="dropdown-item" href="#" id="toggleChartView"><i class="fas fa-chart-bar me-2"></i>Switch Chart Type</a></li>
+                        <li><a class="dropdown-item" href="#" id="downloadChartBtn"><i class="fas fa-download me-2"></i>Download Chart</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body py-2">
+                <div class="chart-container position-relative">
+                    <canvas id="fileTypeChart" height="180"></canvas>
+                    <div id="chartCenterInfo" class="chart-center-info d-flex flex-column justify-content-center align-items-center" style="display: none;">
+                        <h5 id="totalFiles" class="m-0">{{ upload_count }}</h5>
+                        <p class="text-muted small mb-0">Total Files</p>
+                    </div>
+                </div>
+                
+                <div class="chart-legend mt-2 d-flex flex-wrap justify-content-center">
+                    <div class="legend-item d-inline-flex align-items-center mx-2" data-type="Excel">
+                        <span class="legend-color me-1" style="background-color: #3a86ff;"></span>
+                        <span class="legend-label small">Excel</span>
+                    </div>
+                    <div class="legend-item d-inline-flex align-items-center mx-2" data-type="CSV">
+                        <span class="legend-color me-1" style="background-color: #2ecc71;"></span>
+                        <span class="legend-label small">CSV</span>
+                    </div>
+                    <div class="legend-item d-inline-flex align-items-center mx-2" data-type="JSON">
+                        <span class="legend-color me-1" style="background-color: #3498db;"></span>
+                        <span class="legend-label small">JSON</span>
+                    </div>
+                    <div class="legend-item d-inline-flex align-items-center mx-2" data-type="Other">
+                        <span class="legend-color me-1" style="background-color: #f39c12;"></span>
+                        <span class="legend-label small">Other</span>
+                    </div>
+                </div>
+                
+                <div id="fileTypeCounts" class="d-flex flex-wrap justify-content-around mt-2 small">
+                    <!-- File type counts will be displayed here by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold" style="color: var(--primary);">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{% url 'dashboard:upload_file' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-upload me-2"></i> Upload New Data
+                    </a>
+                    <a href="{% url 'dashboard:upload_list' %}" class="btn btn-outline-primary btn-lg">
+                        <i class="fas fa-table me-2"></i> View Data Files
+                    </a>
+                    <a href="{% url 'dashboard:register_user' %}" class="btn btn-success btn-lg">
+                        <i class="fas fa-user-plus me-2"></i> Register New User
+                    </a>
+                    <a href="{% url 'dashboard:registration_list' %}" class="btn btn-outline-success btn-lg">
+                        <i class="fas fa-users me-2"></i> View Registrations
+                    </a>
+                    <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-tools me-2"></i> Admin Panel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this file? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="delete-form" method="post" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" integrity="sha384-9YJa6IbBD1Z3Mz5lfIVkCjxqe7hNzZRBWN1SW9bUVS7gkOQI1+bUMuTRlsrJaNn5" crossorigin="anonymous"></script>
+
+<script>
+    $(document).ready(function() {
+        // Setup delete buttons
+        $('.btn-delete').on('click', function(e) {
+            e.preventDefault();
+            const id = $(this).data('id');
+            $('#delete-form').attr('action', "{% url 'dashboard:delete_upload' 0 %}".replace('0', id));
+            $('#deleteModal').modal('show');
+        });
+
+        // Setup file type chart if we have data
+        const ctx = document.getElementById('fileTypeChart');
+        if (ctx) {
+            // Calculate actual file counts based on percentages and total count
+            const totalFiles = {{ upload_count }};
+            const fileDistribution = {{ file_type_distribution|safe }};
+            const fileTypes = ['Excel', 'CSV', 'JSON', 'Other'];
+            const fileTypeCounts = {};
+            
+            fileDistribution.forEach((percentage, index) => {
+                const count = Math.round((percentage / 100) * totalFiles);
+                fileTypeCounts[fileTypes[index]] = count;
+            });
+            
+            // Configure the chart
+            const chartConfig = {
+                type: 'doughnut',
+                data: {
+                    labels: fileTypes,
+                    datasets: [{
+                        data: fileDistribution,
+                        backgroundColor: [
+                            '#3a86ff', // Excel
+                            '#2ecc71', // CSV
+                            '#3498db', // JSON
+                            '#f39c12', // Other
+                        ],
+                        hoverBackgroundColor: [
+                            '#2667cc', // Dark Excel
+                            '#27ae60', // Dark CSV
+                            '#2980b9', // Dark JSON
+                            '#e67e22', // Dark Other
+                        ],
+                        borderColor: 'white',
+                        borderWidth: 2,
+                        hoverBorderColor: "rgba(234, 236, 244, 1)",
+                    }],
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 14 },
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.formattedValue || '';
+                                    const count = fileTypeCounts[label] || 0;
+                                    return `${label}: ${value}% (${count} files)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '70%',
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true,
+                        duration: 1000
+                    }
+                },
+            };
+            
+            // Initialize the chart
+            const chart = new Chart(ctx, chartConfig);
+            
+            // Position center info for doughnut chart
+            positionCenterInfo();
+            $('#chartCenterInfo').fadeIn();
+            
+            // Function to position the center info
+            function positionCenterInfo() {
+                const chartPosition = ctx.getBoundingClientRect();
+                const centerInfo = $('#chartCenterInfo');
+                centerInfo.css({
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    pointerEvents: 'none'
+                });
+            }
+            
+            // Toggle between doughnut and bar charts
+            $('#toggleChartView').on('click', function() {
+                const isDoughnut = chart.config.type === 'doughnut';
+                const $icon = $(this).find('i');
+                
+                // Update button appearance
+                $icon.removeClass(isDoughnut ? 'fa-chart-bar' : 'fa-chart-pie');
+                $icon.addClass(isDoughnut ? 'fa-chart-pie' : 'fa-chart-bar');
+                $(this).attr('title', isDoughnut ? 'Show as Doughnut Chart' : 'Show as Bar Chart');
+                
+                // Update chart
+                chart.config.type = isDoughnut ? 'bar' : 'doughnut';
+                
+                // Additional configuration for bar chart
+                if (isDoughnut) {
+                    chart.options.indexAxis = 'y';
+                    chart.options.plugins.tooltip.callbacks.label = function(context) {
+                        const label = context.label || '';
+                        const value = context.formattedValue || '';
+                        const count = fileTypeCounts[label] || 0;
+                        return `${label}: ${count} files (${value}%)`;
+                    };
+                } else {
+                    chart.options.plugins.tooltip.callbacks.label = function(context) {
+                        const label = context.label || '';
+                        const value = context.formattedValue || '';
+                        const count = fileTypeCounts[label] || 0;
+                        return `${label}: ${value}% (${count} files)`;
+                    };
+                }
+                
+                chart.update();
+                $('#chartCenterInfo').toggle(!isDoughnut);
+            });
+            
+            // Download chart as image
+            $('#downloadChartBtn').on('click', function() {
+                const link = document.createElement('a');
+                const today = new Date().toISOString().slice(0, 10);
+                link.download = `file_type_distribution_${today}.png`;
+                link.href = chart.toBase64Image('image/png', 1.0);
+                link.click();
+            });
+            
+            // Interactive legends
+            $('.legend-item').on('click', function() {
+                const type = $(this).data('type');
+                const index = fileTypes.indexOf(type);
+                
+                // Toggle visibility
+                const meta = chart.getDatasetMeta(0);
+                if (meta.data[index]) {
+                    const isHidden = meta.data[index].hidden || false;
+                    meta.data[index].hidden = !isHidden;
+                    $(this).toggleClass('disabled', !isHidden);
+                    chart.update();
+                }
+            });
+            
+            // Add hover effect for legend items
+            $('.legend-item').hover(
+                function() { $(this).css('cursor', 'pointer').addClass('text-primary'); },
+                function() { $(this).removeClass('text-primary'); }
+            );
+            
+            // Populate file type counts in the bottom section
+            const fileTypeCountsContainer = $('#fileTypeCounts');
+            fileTypes.forEach(type => {
+                const count = fileTypeCounts[type] || 0;
+                const col = $('<div>').addClass('col-6 col-sm-3 mb-2');
+                const item = $('<div>').addClass('count-item').html(`<strong>${count}</strong><br><span class="text-muted small">${type} files</span>`);
+                col.append(item);
+                fileTypeCountsContainer.append(col);
+            });
+            
+            // Update window resize handler
+            $(window).on('resize', function() {
+                if (chart.config.type === 'doughnut') {
+                    positionCenterInfo();
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    .chart-container {
+        position: relative;
+        min-height: 180px; /* Reduced from 250px */
+    }
+    .legend-color {
+        display: inline-block;
+        width: 12px; /* Reduced from 16px */
+        height: 12px; /* Reduced from 16px */
+        border-radius: 50%;
+    }
+    .legend-item {
+        padding: 3px; /* Reduced from 5px */
+        border-radius: 4px;
+        transition: all 0.2s;
+        font-size: 0.8rem;
+    }
+    .legend-item:hover {
+        background: rgba(0,0,0,0.05);
+    }
+    .legend-item.disabled {
+        opacity: 0.5;
+    }
+    .count-item {
+        padding: 4px; /* Reduced from 8px */
+        border-radius: 4px;
+        background: rgba(0,0,0,0.03);
+        transition: transform 0.2s;
+        font-size: 0.75rem;
+        text-align: center;
+    }
+    .count-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 5px rgba(0,0,0,0.05);
+    }
+    #chartCenterInfo h5 {
+        font-size: 1rem;
+    }
+    #chartCenterInfo p {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}

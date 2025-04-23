@@ -1,0 +1,516 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Reports - Dashboard{% endblock %}
+
+{% block page_title %}Reports{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center" style="background-color: var(--primary); color: white;">
+                <h6 class="m-0 font-weight-bold">Generate Reports</h6>
+            </div>
+            <div class="card-body">
+                {% if uploads %}
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="report-dataset" class="form-label">Select Dataset</label>
+                            <select class="form-select" id="report-dataset">
+                                <option value="">-- Select a dataset --</option>
+                                {% for upload in uploads %}
+                                <option value="{{ upload.id }}">{{ upload.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="report-type" class="form-label">Report Type</label>
+                            <select class="form-select" id="report-type">
+                                <option value="summary">Summary Report</option>
+                                <option value="detailed">Detailed Analysis Report</option>
+                                <option value="executive">Executive Summary</option>
+                                <option value="visual">Visual Dashboard</option>
+                                <option value="custom">Custom Report</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="report-format" class="form-label">Format</label>
+                            <select class="form-select" id="report-format">
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                                <option value="html">HTML</option>
+                                <option value="csv">CSV</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Report Options -->
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Report Options
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="include-summary" checked>
+                                            <label class="form-check-label" for="include-summary">
+                                                Include Summary Statistics
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="include-charts" checked>
+                                            <label class="form-check-label" for="include-charts">
+                                                Include Charts and Visualizations
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="include-raw-data">
+                                            <label class="form-check-label" for="include-raw-data">
+                                                Include Raw Data
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="include-analysis" checked>
+                                            <label class="form-check-label" for="include-analysis">
+                                                Include Analysis Section
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="include-metadata" checked>
+                                            <label class="form-check-label" for="include-metadata">
+                                                Include File Metadata
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input class="form-check-input" type="checkbox" id="include-cover">
+                                            <label class="form-check-label" for="include-cover">
+                                                Include Cover Page
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-info" id="report-instructions">
+                            <i class="fas fa-info-circle me-2"></i> 
+                            Select a dataset and report type, then configure the options and click "Generate Report".
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12 text-center">
+                        <button type="button" class="btn btn-primary px-4" id="generate-report">
+                            <i class="fas fa-file-alt me-2"></i> Generate Report
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Recent Reports -->
+                <div class="row mt-5">
+                    <div class="col-12">
+                        <h6 class="font-weight-bold">Recent Reports</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Report Name</th>
+                                        <th>Dataset</th>
+                                        <th>Type</th>
+                                        <th>Generated On</th>
+                                        <th>Format</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reports-table">
+                                    <tr id="no-reports-row">
+                                        <td colspan="6" class="text-center">No recent reports found.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; background-color: rgba(244, 122, 99, 0.1);">
+                        <i class="fas fa-file-alt fa-3x" style="color: var(--primary);"></i>
+                    </div>
+                    <p class="lead">No datasets available for reporting.</p>
+                    <a href="{% url 'dashboard:upload_file' %}" class="btn btn-primary mt-2">
+                        <i class="fas fa-upload"></i> Upload Data
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Preview Modal -->
+<div class="modal fade" id="reportPreviewModal" tabindex="-1" aria-labelledby="reportPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportPreviewModalLabel">Report Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4" id="report-generating">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Generating your report, please wait...</p>
+                    <div class="progress" style="height: 5px;">
+                        <div id="report-progress" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                
+                <div id="report-content" style="display: none;">
+                    <!-- Report content will be displayed here -->
+                    <div id="report-preview-container" class="border p-4">
+                        <div class="text-center mb-5">
+                            <h2 id="preview-report-title">Data Analysis Report</h2>
+                            <p class="text-muted">Generated on <span id="preview-date"></span></p>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h4>Summary</h4>
+                            <div class="card">
+                                <div class="card-body">
+                                    <table class="table table-bordered table-sm">
+                                        <tr>
+                                            <th style="width: 200px;">Dataset:</th>
+                                            <td><span id="preview-dataset-name"></span></td>
+                                        </tr>
+                                        <tr>
+                                            <th>Records:</th>
+                                            <td>1,205</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Fields:</th>
+                                            <td>14</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Created By:</th>
+                                            <td>Admin User</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h4>Key Findings</h4>
+                            <ul>
+                                <li>Average value across all records: 45.38</li>
+                                <li>Standard deviation: 12.56</li>
+                                <li>25% of records are missing values in at least one field</li>
+                                <li>Strong positive correlation (0.87) between variables X and Y</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <h4>Data Visualization</h4>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <canvas id="preview-chart1" height="250"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <canvas id="preview-chart2" height="250"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-5">
+                            <p class="text-muted">End of Report Preview</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="download-report" style="display: none;">
+                    <i class="fas fa-download me-1"></i> Download Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    $(document).ready(function() {
+        // Format today's date
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // Update report type based on selection
+        $('#report-type').on('change', function() {
+            const reportType = $(this).val();
+            
+            // Show/hide options based on report type
+            switch(reportType) {
+                case 'summary':
+                    $('#include-raw-data').prop('checked', false);
+                    $('#include-cover').prop('checked', false);
+                    break;
+                case 'detailed':
+                    $('#include-raw-data').prop('checked', true);
+                    $('#include-cover').prop('checked', true);
+                    break;
+                case 'executive':
+                    $('#include-raw-data').prop('checked', false);
+                    $('#include-summary').prop('checked', true);
+                    $('#include-charts').prop('checked', true);
+                    $('#include-cover').prop('checked', true);
+                    break;
+                case 'visual':
+                    $('#include-charts').prop('checked', true);
+                    $('#include-raw-data').prop('checked', false);
+                    break;
+            }
+        });
+        
+        // Generate report button click handler
+        $('#generate-report').on('click', function() {
+            const datasetId = $('#report-dataset').val();
+            const reportType = $('#report-type').val();
+            const reportFormat = $('#report-format').val();
+            
+            if (!datasetId) {
+                showToast('Please select a dataset first', 'warning');
+                return;
+            }
+            
+            // Show report generation modal
+            const reportModal = new bootstrap.Modal(document.getElementById('reportPreviewModal'));
+            reportModal.show();
+            
+            // Set dataset name in preview
+            const datasetName = $('#report-dataset option:selected').text();
+            $('#preview-dataset-name').text(datasetName);
+            $('#preview-date').text(formattedDate);
+            
+            // Update report title based on type
+            const reportTitles = {
+                'summary': 'Summary Report',
+                'detailed': 'Detailed Analysis Report',
+                'executive': 'Executive Summary',
+                'visual': 'Data Visualization Dashboard',
+                'custom': 'Custom Data Report'
+            };
+            $('#preview-report-title').text(reportTitles[reportType] + ': ' + datasetName);
+            
+            // Show loading indicator with progress
+            $('#report-generating').show();
+            $('#report-content, #download-report').hide();
+            
+            // Simulate progress
+            let progress = 0;
+            const progressInterval = setInterval(function() {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // Show report content
+                    setTimeout(function() {
+                        $('#report-generating').hide();
+                        $('#report-content, #download-report').show();
+                        
+                        // Generate example charts
+                        generateExampleCharts();
+                        
+                        // Add to recent reports
+                        addToRecentReports(datasetName, reportType, formattedDate, reportFormat);
+                    }, 500);
+                }
+                $('#report-progress').css('width', progress + '%').attr('aria-valuenow', progress);
+            }, 500);
+        });
+        
+        // Download report button click handler
+        $('#download-report').on('click', function() {
+            showToast('Report downloaded successfully!', 'success');
+        });
+        
+        // Function to generate example charts for the report preview
+        function generateExampleCharts() {
+            // Bar chart
+            const ctx1 = document.getElementById('preview-chart1').getContext('2d');
+            new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['Category A', 'Category B', 'Category C', 'Category D', 'Category E'],
+                    datasets: [{
+                        label: 'Values by Category',
+                        data: [65, 59, 80, 81, 56],
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(255, 99, 132)',
+                            'rgb(54, 162, 235)',
+                            'rgb(255, 206, 86)',
+                            'rgb(75, 192, 192)',
+                            'rgb(153, 102, 255)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribution by Category'
+                        }
+                    }
+                }
+            });
+            
+            // Line chart
+            const ctx2 = document.getElementById('preview-chart2').getContext('2d');
+            new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Trend Over Time',
+                        data: [12, 19, 3, 5, 2, 3],
+                        fill: false,
+                        borderColor: 'rgb(244, 122, 99)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Time Series Analysis'
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Function to add a report to the recent reports list
+        function addToRecentReports(datasetName, reportType, date, format) {
+            // Remove the "no reports" row if present
+            $('#no-reports-row').remove();
+            
+            // Create a unique ID for the report
+            const reportId = 'report-' + Date.now();
+            
+            // Map report types to display names
+            const reportTypeNames = {
+                'summary': 'Summary Report',
+                'detailed': 'Detailed Analysis',
+                'executive': 'Executive Summary',
+                'visual': 'Visual Dashboard',
+                'custom': 'Custom Report'
+            };
+            
+            // Map formats to icons
+            const formatIcons = {
+                'pdf': 'fa-file-pdf',
+                'excel': 'fa-file-excel',
+                'html': 'fa-file-code',
+                'csv': 'fa-file-csv'
+            };
+            
+            // Add the new report to the table
+            const newRow = `
+                <tr id="${reportId}">
+                    <td>${reportTypeNames[reportType]}: ${datasetName}</td>
+                    <td>${datasetName}</td>
+                    <td>${reportTypeNames[reportType]}</td>
+                    <td>${date}</td>
+                    <td><i class="fas ${formatIcons[format]} me-2"></i>${format.toUpperCase()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary view-report me-1" data-id="${reportId}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-success download-report me-1" data-id="${reportId}">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger delete-report" data-id="${reportId}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            
+            // Prepend to the table (so newest reports are at the top)
+            $('#reports-table').prepend(newRow);
+            
+            // Add event handlers for the new buttons
+            $(`.view-report[data-id="${reportId}"]`).on('click', function() {
+                const reportModal = new bootstrap.Modal(document.getElementById('reportPreviewModal'));
+                reportModal.show();
+                $('#report-generating').hide();
+                $('#report-content, #download-report').show();
+                generateExampleCharts();
+            });
+            
+            $(`.download-report[data-id="${reportId}"]`).on('click', function() {
+                showToast('Report downloaded successfully!', 'success');
+            });
+            
+            $(`.delete-report[data-id="${reportId}"]`).on('click', function() {
+                $(`#${reportId}`).remove();
+                
+                // If no more reports, add back the "no reports" row
+                if ($('#reports-table tr').length === 0) {
+                    $('#reports-table').append(`
+                        <tr id="no-reports-row">
+                            <td colspan="6" class="text-center">No recent reports found.</td>
+                        </tr>
+                    `);
+                }
+                
+                showToast('Report deleted successfully', 'success');
+            });
+        }
+    });
+</script>
+{% endblock %}

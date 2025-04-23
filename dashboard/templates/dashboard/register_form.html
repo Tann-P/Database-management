@@ -1,0 +1,88 @@
+{% extends 'dashboard/public_base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Register | Registration System{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h2 class="display-5 fw-bold text-primary">User Registration</h2>
+            <p class="lead">Please fill in your information to register with us</p>
+        </div>
+    </div>
+
+    <!-- Registration Form Card -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold" style="color: var(--primary);">Registration Form</h6>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    <div class="alert-container mb-4">
+                        {% for message in messages %}
+                        <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="user">
+                        {% csrf_token %}
+                        {% crispy form %}
+                    </form>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="small text-muted">All fields are required. Your information will be kept secure.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="row mt-4">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-info-circle me-2"></i>Registration Information</h5>
+                    <p class="card-text">By registering with us, you're providing your personal information that will be stored securely in our database. After registration, you will receive a confirmation of your successful registration.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Phone number formatting
+    $('#id_phone_number').on('input', function() {
+        var phoneNumber = $(this).val().replace(/\D/g, '');
+        if (phoneNumber.length > 10) {
+            phoneNumber = phoneNumber.substring(0, 10);
+        }
+        
+        // Format as XXX-XXX-XXXX
+        if (phoneNumber.length >= 6) {
+            phoneNumber = phoneNumber.substring(0, 3) + '-' + phoneNumber.substring(3, 6) + '-' + phoneNumber.substring(6);
+        } else if (phoneNumber.length >= 3) {
+            phoneNumber = phoneNumber.substring(0, 3) + '-' + phoneNumber.substring(3);
+        }
+        
+        $(this).val(phoneNumber);
+    });
+    
+    // Citizen ID validation - custom format if needed
+    $('#id_citizen_id').on('input', function() {
+        var id = $(this).val().replace(/[^\dXx]/g, '');  // Remove non-digits except X
+        $(this).val(id);
+    });
+});
+</script>
+{% endblock %}
